@@ -1,6 +1,17 @@
 import React, { useState } from "react";
 import { register } from "../services/authService";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -41,53 +52,88 @@ export default function Register() {
   };
 
   return (
-    <div>
-      {message && (
-        <p className={message.type === "success" ? "text-green-500" : "text-red-500"}>
-          {message.text}
-        </p>
-      )}
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          name="username"
-          placeholder="Username"
-          value={formData.username}
-          onChange={handleChange}
-          className="border p-2 rounded w-full mb-4"
-        />
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-          className="border p-2 rounded w-full mb-4"
-        />
-        <input
-          type="password"
-          name="password1"
-          placeholder="Password"
-          value={formData.password1}
-          onChange={handleChange}
-          className="border p-2 rounded w-full mb-4"
-        />
-        <input
-          type="password"
-          name="password2"
-          placeholder="Confirm Password"
-          value={formData.password2}
-          onChange={handleChange}
-          className="border p-2 rounded w-full mb-4"
-        />
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          {isLoading ? "Registering..." : "Register"}
-        </button>
-      </form>
+    <div className="flex items-center justify-center h-screen bg-gray-50">
+      <Card className="w-[400px] shadow-md">
+        <CardHeader>
+          <CardTitle>Register</CardTitle>
+          <CardDescription>
+            Sudah punya akun?{" "}
+            <span className="underline text-indigo-700 font-bold">
+              <a href="/login">Login</a>
+            </span>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {message && (
+            <p
+              className={`text-sm mb-4 ${
+                message.type === "success" ? "text-green-500" : "text-red-500"
+              }`}
+            >
+              {message.text}
+            </p>
+          )}
+          <form onSubmit={handleSubmit} className="grid gap-4">
+            <div className="flex flex-col space-y-1.5">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                type="text"
+                id="username"
+                name="username"
+                placeholder="Username"
+                value={formData.username}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="flex flex-col space-y-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="Email"
+                value={formData.email}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="flex flex-col space-y-1.5">
+              <Label htmlFor="password1">Password</Label>
+              <Input
+                type="password"
+                id="password1"
+                name="password1"
+                placeholder="Password"
+                value={formData.password1}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="flex flex-col space-y-1.5">
+              <Label htmlFor="password2">Confirm Password</Label>
+              <Input
+                type="password"
+                id="password2"
+                name="password2"
+                placeholder="Confirm Password"
+                value={formData.password2}
+                onChange={handleChange}
+              />
+            </div>
+          </form>
+        </CardContent>
+        <CardFooter className="flex flex-col space-y-2">
+          <Button
+            type="submit"
+            disabled={isLoading}
+            onClick={handleSubmit}
+            className="w-full"
+          >
+            {isLoading ? "Registering..." : "Register"}
+          </Button>
+          <Button variant="outline" className="w-full">
+            Need Help?
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

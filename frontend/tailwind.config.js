@@ -1,11 +1,19 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html", // Pastikan file ini ada di root proyek
-    "./src/**/*.{js,ts,jsx,tsx}", // Tambahkan semua file yang relevan
-  ],
+  darkMode: ["class"],
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
-    extend: {},
+    extend: {
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+      colors: {},
+    },
+    fontFamily: {
+      sans: ["Plus Jakarta Sans", "Inter", "sans-serif"],
+    },
   },
-  plugins: [],
+  plugins: [require("tailwindcss-animate")],
 };
