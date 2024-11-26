@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import StudentDashboard from "./pages/StudentDashboard";
+import TeacherDashboard from "./pages/TeacherDashboard";
 import PrivateRoute from "./components/PrivateRoute"; // Import PrivateRoute
 import "./styles/index.css";
 
@@ -19,6 +20,7 @@ function App() {
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route path="/student-dashboard" element={<StudentDashboard />} />
+          <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
         </Route>
 
         {/* Dashboard hanya bisa diakses jika login */}
