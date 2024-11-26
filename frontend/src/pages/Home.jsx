@@ -49,7 +49,7 @@ export default function Home() {
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-y-4 sm:gap-x-6">
               <Link
                 to="/login"
-                className="rounded-md w-full bg-indigo-700 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                className="rounded-md w-full bg-indigo-900 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-800"
               >
                 Get Started
               </Link>
