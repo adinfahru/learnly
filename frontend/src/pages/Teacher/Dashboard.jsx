@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { getUser, logout } from "../services/authService";  // Ensure this service is available to get user data
+import { getUser, logout } from "../../services/authService";  // Ensure this service is available to get user data
 import { useNavigate } from "react-router-dom";
 
-export default function StudentDashboard() {
+export default function TeacherDashboard() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -48,7 +48,7 @@ export default function StudentDashboard() {
 
   return (
     <div className="dashboard-container">
-      <h1>Welcome to the Student Dashboard</h1>
+      <h1>Welcome to the Teacher Dashboard</h1>
 
       {loading ? (
         <p>Loading your data...</p>
@@ -59,8 +59,8 @@ export default function StudentDashboard() {
           <p>Email: {user.email}</p>
           <p>Username: {user.username}</p>
           <p>Role: {user.role}</p>
-          {/* Add any student-specific content here */}
-          <p>Additional student content goes here...</p>
+          {/* Add any teacher-specific content here */}
+          <p>Additional teacher content goes here...</p>
         </div>
       )}
 

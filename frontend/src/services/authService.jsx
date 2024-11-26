@@ -17,10 +17,9 @@ export const register = async (data) => {
 
 // Logout the user by invalidating the refresh token
 export const logout = async (refreshToken, accessToken) => {
-  // Include the access token in the Authorization header
   return apiClient.post("accounts/logout/", { refresh: refreshToken }, {
     headers: {
-      Authorization: `Bearer ${accessToken}`  // Attach the access token for authentication
+      Authorization: `Bearer ${accessToken}`
     }
   });
 };  
