@@ -9,26 +9,43 @@ export default function Login() {
 
   const navigate = useNavigate();  // Initialize useNavigate
 
+  // Handle form input changes
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setMessage(null);  // Reset message before attempting login
+
     try {
+      // Attempt to login with the provided form data
       const response = await login(formData);
-      // Store the tokens in localStorage
+
+      // Store tokens in localStorage (use secure methods in production)
       localStorage.setItem("accessToken", response.data.tokens.access);
       localStorage.setItem("refreshToken", response.data.tokens.refresh);
 
       // Set success message
       setMessage({ type: "success", text: "Login successful!" });
 
-      // Immediately navigate to Dashboard page after successful login
-      navigate("/dashboard");  // Navigate directly without delay
+      // Redirect user based on role (you can adjust roles here)
+      const role = response.data.role;
+      if (role === "student") {
+        navigate("/student-dashboard");
+      } else if (role === "teacher") {
+        navigate("/teacher-dashboard");
+      } else {
+        navigate("/dashboard");  // Default dashboard or handle unknown roles
+      }
     } catch (error) {
-      setMessage({ type: "error", text: error.response?.data?.detail || "Login failed!" });
+      // Handle login failure with specific error messages
+      setMessage({
+        type: "error",
+        text: error.response?.data?.detail || "Login failed!",
+      });
     } finally {
       setIsLoading(false);
     }
