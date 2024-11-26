@@ -1,103 +1,93 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { register } from "../services/authService";
+import { useNavigate } from "react-router-dom";
 
 export default function Register() {
-	const [formData, setFormData] = useState({
-		username: "",
-		email: "",
-		password1: "",
-		password2: "",
-	});
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password1: "",
+    password2: "",
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState(null);
 
-	const handleChange = (e) => {
-		setFormData({
-			...formData,
-			[e.target.name]: e.target.value,
-		});
-	};
-	const [isLoading, setIsLoading] = useState(false);
-    const [successMessage, setSuccessMessage] = useState(null);
-    const [error, setError] = useState(null)
-	
-    const handleSubmit = async (e) => {
-		e.preventDefault();
-        if(isLoading){
-            return
-        }
+  const navigate = useNavigate();
 
-        setIsLoading(true);
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
 
-        try{
-            const response = await axios.post("http://127.0.0.1:8000/api/register/", formData)
-            console.log("Success!", response.data)
-            setSuccessMessage("Registration Successful!")
-        }
-        catch(error){
-            console.log("Error during registration!", error.response?.data);
-            if(error.response && error.response.data){
-                Object.keys(error.response.data).forEach(field => {
-                    const errorMessages = error.response.data[field];
-                    if(errorMessages && errorMessages.length > 0){
-                        setError(errorMessages[0]);
-                    }
-                })
-            }
-        }
-        finally{
-            setIsLoading(false)
-        }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const response = await register(formData);
+      setMessage({ type: "success", text: "Registration successful!" });
 
-	};
-	return (
-		<div>
-            {error && <p style={{color:"red"}}>{error}</p>}
-            { successMessage && <p style={{color:"green"}}>{successMessage}</p>}
-			<h2>Register:</h2>
-			<form>
-				<label>username:</label>
-				<br />
-				<input
-					type="text"
-					name="username"
-					value={formData.username}
-					onChange={handleChange}
-				></input>{" "}
-				<br />
-				<br />
-				<label>email:</label>
-				<br />
-				<input
-					type="email"
-					name="email"
-					value={formData.email}
-					onChange={handleChange}
-				></input>{" "}
-				<br />
-				<br />
-				<label>password:</label>
-				<br />
-				<input
-					type="password"
-					name="password1"
-					value={formData.password1}
-					onChange={handleChange}
-				></input>{" "}
-				<br />
-				<br />
-				<label>confirm password:</label>
-				<br />
-				<input
-					type="password"
-					name="password2"
-					value={formData.password2}
-					onChange={handleChange}
-				></input>{" "}
-				<br />
-				<br />
-				<button type="submit" disabled={isLoading} onClick={handleSubmit}>
-					Register
-				</button>
-			</form>
-		</div>
-	);
+      // Redirect to login page after successful registration
+      setTimeout(() => navigate("/login"), 2000);
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error.response?.data?.detail || "Registration failed!",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      {message && (
+        <p className={message.type === "success" ? "text-green-500" : "text-red-500"}>
+          {message.text}
+        </p>
+      )}
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          name="username"
+          placeholder="Username"
+          value={formData.username}
+          onChange={handleChange}
+          className="border p-2 rounded w-full mb-4"
+        />
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={formData.email}
+          onChange={handleChange}
+          className="border p-2 rounded w-full mb-4"
+        />
+        <input
+          type="password"
+          name="password1"
+          placeholder="Password"
+          value={formData.password1}
+          onChange={handleChange}
+          className="border p-2 rounded w-full mb-4"
+        />
+        <input
+          type="password"
+          name="password2"
+          placeholder="Confirm Password"
+          value={formData.password2}
+          onChange={handleChange}
+          className="border p-2 rounded w-full mb-4"
+        />
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          {isLoading ? "Registering..." : "Register"}
+        </button>
+      </form>
+    </div>
+  );
 }

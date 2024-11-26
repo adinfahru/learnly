@@ -1,72 +1,24 @@
-import React from 'react'
-import { useState, useEffect } from 'react'
-import axios from "axios"
+import React from "react";
+import { Link } from "react-router-dom";
 
 export default function Home() {
-  
-  const [username, setUsername] = useState("")
-  const [isLoggedIn, setLoggedIn] = useState(false)
-  
-  useEffect (()=>{
-    const checkLoggedInUser = async () =>{
-      try{
-        const token = localStorage.getItem("accessToken");
-        if (token) {
-          const config = {
-            headers: {
-              "Authorization":`Bearer ${token}`
-            }
-          };
-          const response = await axios.get("http://127.0.0.1:8000/api/user/", config)
-          setLoggedIn(true)
-          setUsername(response.data.username)
-        }
-        else{
-          setLoggedIn(false);
-          setUsername("");
-        }
-      }
-      catch(error){
-        setLoggedIn(false);
-        setUsername("");
-      }
-    };
-    checkLoggedInUser()
-  }, [])
-
-  const handleLogout = async () => {
-    try{
-      const accessToken = localStorage.getItem("accessToken");
-      const refreshToken = localStorage.getItem("refreshToken");
-
-      if(accessToken && refreshToken) {
-        const config = {
-          headers: {
-            "Authorization":`Bearer ${accessToken}`
-          }
-        };
-        await axios.post("http://127.0.0.1:8000/api/logout/", {"refresh":refreshToken}, config)
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        setLoggedIn(false);
-        setUsername("");
-        console.log("Log out successful!")
-      }
-    }
-    catch(error){
-      console.error("Failed to logout", error.response?.data || error.message)
-    }
-  }
   return (
-    <div>
-      {isLoggedIn ? (
-        <>
-      <h2>Hi, {username}. Thanks for loggin in!</h2>
-      <button onClick={handleLogout}>Logout</button>
-      </>
-      ):(
-      <h2>Please Login</h2>
-    )}
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+      <h1 className="text-4xl font-bold">Welcome to LMS</h1>
+      <div className="mt-6">
+        <Link
+          to="/login"
+          className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
+        >
+          Login
+        </Link>
+        <Link
+          to="/register"
+          className="ml-4 bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600"
+        >
+          Register
+        </Link>
+      </div>
     </div>
-  )
+  );
 }

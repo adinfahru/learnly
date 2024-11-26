@@ -1,24 +1,36 @@
-import './App.css'
+import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Home from "./pages/Home"
-import Layout from './pages/Layout';
-import Register from './pages/Register';
-import Login from './pages/Login'
+import Header from "./components/Header";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import PrivateRoute from "./components/PrivateRoute"; // Import PrivateRoute
+import "./styles/index.css";
+
 function App() {
-
   return (
-   <BrowserRouter>
-   <Routes>
-    <Route path='/' element={<Layout/>}>
-    <Route index element={<Home/>}/>
-    <Route path="login" element={<Login/>}/>
-    <Route path="register" element={<Register/>}/>
+    <BrowserRouter>
+      <Routes>
+        {/* Header hanya untuk halaman home, login, register */}
+        <Route path="/" element={<Header />}>
+          <Route index element={<Home />} />
+          <Route path="login" element={<Login />} />
+          <Route path="register" element={<Register />} />
+        </Route>
 
-    </Route>
-   </Routes>
-   
-   </BrowserRouter> 
-  )
+        {/* Dashboard hanya bisa diakses jika login */}
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute>
+              <Dashboard />
+            </PrivateRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
