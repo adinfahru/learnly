@@ -1,20 +1,17 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
-import Header from "../components/Header"; // Mengimpor Header
+import Header from "../components/Header"; 
 import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import StudentDashboard from "../pages/Student/Dashboard";
 import TeacherDashboard from "../pages/Teacher/Dashboard";
 import PrivateRoute from "../components/PrivateRoute"; 
-import NotFound from "../pages/NotFound"; // Import halaman 404
+import NotFound from "../pages/NotFound";
 
 function AppRouter() {
   return (
     <>
-      {/* Header muncul di semua halaman */}
-      <Header />
-      
       <Routes>
         {/* Halaman publik */}
         <Route path="/" element={<Home />} />

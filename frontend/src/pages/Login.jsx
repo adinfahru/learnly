@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { login } from "../services/authService";
-import { useNavigate } from "react-router-dom";  // Import useNavigate
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button"
+
 
 export default function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -75,13 +77,13 @@ export default function Login() {
           onChange={handleChange}
           className="border p-2 rounded w-full mb-4"
         />
-        <button
+        <Button
           type="submit"
           disabled={isLoading}
           className="bg-blue-500 text-white px-4 py-2 rounded"
         >
           {isLoading ? "Logging in..." : "Login"}
-        </button>
+        </Button>
       </form>
     </div>
   );
