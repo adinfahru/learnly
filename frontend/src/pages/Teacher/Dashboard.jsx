@@ -1,23 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { getUser, logout } from "../../services/authService";
+import { getUser } from "../../services/authService";
+import { getTeacherClasses } from "../../services/teacherService";
 import { useNavigate } from "react-router-dom";
+import CreateClassModal from "./CreateClassModal";
+import Header from "../../components/Header";
 
-export default function StudentDashboard() {
+export default function TeacherDashboard() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [classes, setClasses] = useState([]);
   const [isTokenExpired, setIsTokenExpired] = useState(false);
   const [showSessionExpiredModal, setShowSessionExpiredModal] = useState(false);
+  const [showCreateClassModal, setShowCreateClassModal] = useState(false);
 
   const navigate = useNavigate();
-
-  // Dummy classes (replace this with real data from the backend later)
-  const dummyClasses = [
-    { id: 1, name: "Mathematics 101", teacher: "You", schedule: "Monday, 10:00 AM" },
-    { id: 2, name: "Introduction to Physics", teacher: "You", schedule: "Wednesday, 2:00 PM" },
-    { id: 3, name: "History of Art", teacher: "You", schedule: "Friday, 1:00 PM" },
-  ];
 
   // Check if token is expired
   const isTokenExpiredFn = (token) => {
@@ -30,9 +27,9 @@ export default function StudentDashboard() {
     }
   };
 
-  // Fetch user data on component mount
+  // Fetch user data and classes on component mount
   useEffect(() => {
-    const checkTokenAndFetchUser = async () => {
+    const checkTokenAndFetchData = async () => {
       const accessToken = localStorage.getItem("accessToken");
 
       if (!accessToken && isTokenExpiredFn(accessToken)) {
@@ -41,22 +38,26 @@ export default function StudentDashboard() {
       }
 
       try {
-        const response = await getUser();
-        setUser(response.data);
+        const [userResponse, classesResponse] = await Promise.all([
+          getUser(),
+          getTeacherClasses(),
+        ]);
+
+        setUser(userResponse.data);
+        setClasses(classesResponse.data);
         setLoading(false);
-        setClasses(dummyClasses);
       } catch (error) {
-        console.error("Error fetching user data:", error);
+        console.error("Error fetching data:", error);
         if (error.response?.status === 401) {
           setShowSessionExpiredModal(true);
         } else {
-          setError("Failed to load user data");
+          setError("Failed to load data");
         }
         setLoading(false);
       }
     };
 
-    checkTokenAndFetchUser();
+    checkTokenAndFetchData();
   }, []);
 
   // Handle session expired
@@ -79,27 +80,36 @@ export default function StudentDashboard() {
     }
   };
 
-  // Handle Join Class (for now it's a dummy function)
-  const handleJoinClass = (classId) => {
-    alert(`Joined class with ID: ${classId}`);
+  // Refresh classes list
+  const refreshClasses = async () => {
+    try {
+      const response = await getTeacherClasses();
+      setClasses(response.data);
+    } catch (error) {
+      console.error("Error refreshing classes:", error);
+    }
   };
 
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar */}
       <div className="w-64 bg-indigo-700 text-white p-6 flex flex-col">
-        <h2 className="text-2xl font-bold mb-6">Your Classes</h2>
+        <h2 className="font-bold mb-6">Welcome, {user?.username}!</h2>
         <ul className="space-y-4 flex-grow">
           {classes.map((classItem) => (
-            <li key={classItem.id} className="bg-indigo-600 p-4 rounded-md shadow-md hover:bg-indigo-500 cursor-pointer">
+            <li
+              key={classItem.id}
+              className="bg-indigo-600 p-4 rounded-md shadow-md hover:bg-indigo-500 cursor-pointer"
+            >
               <h3 className="font-semibold">{classItem.name}</h3>
+              <p className="text-sm text-indigo-200">Code: {classItem.code}</p>
             </li>
           ))}
         </ul>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-8">
+      <div className="flex-1">
         <div className="flex justify-between items-center mb-6">
           {/* Logout Button */}
           <button
@@ -135,44 +145,56 @@ export default function StudentDashboard() {
           </div>
         )}
 
-        {/* Button to Join Class */}
+        {/* Create Class Button */}
         <div className="mt-6 text-end">
           <button
-            onClick={() => handleJoinClass(1)}
+            onClick={() => setShowCreateClassModal(true)}
             className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600"
           >
             Create Class
           </button>
         </div>
 
-        <h1 className="text-3xl font-bold text-indigo-700">Teacher Dashboard</h1>
-
-        {/* User Information */}
-        {loading ? (
-          <p className="text-center text-gray-600 mt-4">Loading your data...</p>
-        ) : error ? (
-          <p className="text-red-500 text-center mt-4">{error}</p>
-        ) : (
-          <div className="bg-white shadow-md rounded-lg p-6 mt-6">
-            <h2 className="text-lg font-semibold text-gray-700">
-              Welcome, {user?.username}!
-            </h2>
-          </div>
-        )}
-
-        {/* Classes Section */}
+        {/* Classes Grid View */}
         <div className="mt-10">
-          <h2 className="text-xl font-semibold text-gray-700">Your Classes</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
             {classes.map((classItem) => (
-              <div key={classItem.id} className="bg-white shadow-md rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-indigo-700">{classItem.name}</h3>
-                <p className="text-gray-500">Teacher: {classItem.teacher}</p>
-                <p className="text-gray-500">Schedule: {classItem.schedule}</p>
+              <div
+                key={classItem.id}
+                className="bg-white shadow-md rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer"
+              >
+                <h3 className="text-xl font-semibold text-indigo-700">
+                  {classItem.name}
+                </h3>
+                <p className="text-gray-600 mt-2">{classItem.subject}</p>
+                <div className="mt-4 pt-4 border-t">
+                  <p className="text-sm text-gray-500">
+                    Class Code:{" "}
+                    <span className="font-mono font-bold">
+                      {classItem.code}
+                    </span>
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Students: {classItem.students?.length || 0}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
         </div>
+
+        {/* Modals */}
+        {showCreateClassModal && (
+          <CreateClassModal
+            onClose={() => setShowCreateClassModal(false)}
+            onClassCreated={() => {
+              setShowCreateClassModal(false);
+              refreshClasses();
+            }}
+          />
+        )}
+
+        {/* ... existing modals ... */}
       </div>
     </div>
   );

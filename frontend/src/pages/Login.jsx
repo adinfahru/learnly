@@ -41,9 +41,9 @@ export default function Login() {
 
       const role = response.data.role;
       if (role === "student") {
-        navigate("/student-dashboard");
+        navigate("/student/dashboard");
       } else if (role === "teacher") {
-        navigate("/teacher-dashboard");
+        navigate("/teacher/dashboard");
       } else {
         navigate("/dashboard");
       }

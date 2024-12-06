@@ -8,13 +8,14 @@ export default function Header() {
       <nav className="bg-gray-800 p-4">
         <ul className="flex justify-around text-white">
           <li>
-            <Link to="/">Home</Link>
-          </li>
-          <li>
-            <Link to="/login">Login</Link>
-          </li>
-          <li>
-            <Link to="/register">Register</Link>
+            <div className="mt-6 text-end">
+              <button
+                onClick={() => setShowCreateClassModal(true)}
+                className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600"
+              >
+                Create Class
+              </button>
+            </div>
           </li>
         </ul>
       </nav>
