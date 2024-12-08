@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from accounts.permissions import IsStudent
 from .serializers import StudentSerializer
 from rest_framework import status
-from teacher.models import Class
+from classes.models import Class
 
 class StudentDashboardView(APIView):
     permission_classes = [IsStudent]
@@ -31,6 +31,6 @@ class EnrolledClassesView(APIView):
 
     def get(self, request):
         classes = request.user.enrolled_classes.all()
-        from teacher.serializers import ClassSerializer
+        from classes.serializers import ClassSerializer
         serializer = ClassSerializer(classes, many=True)
         return Response(serializer.data)

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { createClass } from '../../services/teacherService';
+import { createClass } from "../../services/classService";
 
 export default function CreateClassModal({ onClose, onClassCreated }) {
   const [formData, setFormData] = useState({

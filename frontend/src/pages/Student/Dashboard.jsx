@@ -89,6 +89,10 @@ export default function StudentDashboard() {
     }
   };
 
+  const handleClassClick = (classId) => {
+    navigate(`/class/${classId}`);  // Navigasi ke ClassDetail
+  };
+
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -100,6 +104,7 @@ export default function StudentDashboard() {
             <li 
               key={classItem.id} 
               className="bg-indigo-600 p-4 rounded-md shadow-md hover:bg-indigo-500 cursor-pointer"
+              onClick={() => handleClassClick(classItem.id)}
             >
               <h3 className="font-semibold">{classItem.name}</h3>
               <p className="text-sm text-indigo-200">{classItem.subject}</p>
@@ -150,6 +155,7 @@ export default function StudentDashboard() {
               <div 
                 key={classItem.id} 
                 className="bg-white shadow-md rounded-lg p-6 hover:shadow-lg transition-shadow"
+                onClick={() => handleClassClick(classItem.id)}
               >
                 <h3 className="text-xl font-semibold text-indigo-700">{classItem.name}</h3>
                 <p className="text-gray-600 mt-2">{classItem.subject}</p>
