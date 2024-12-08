@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "corsheaders",
     'teacher',
     'student',
+    'classes',
 
 ]
 

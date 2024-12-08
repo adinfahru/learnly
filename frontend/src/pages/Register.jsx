@@ -17,6 +17,8 @@ export default function Register() {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
+    first_name: '',
+    last_name: '',
     password1: "",
     password2: "",
   });
@@ -93,6 +95,28 @@ export default function Register() {
                 name="email"
                 placeholder="Email"
                 value={formData.email}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="flex flex-col space-y-1.5">
+              <Label htmlFor="first_name">First Name</Label>
+              <Input
+                type="text"
+                id="first_name"
+                name="first_name"
+                placeholder="First Name"
+                value={formData.first_name}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="flex flex-col space-y-1.5">
+              <Label htmlFor="last_name">Last Name</Label>
+              <Input
+                type="text"
+                id="last_name"
+                name="last_name"
+                placeholder="Last Name"
+                value={formData.last_name}
                 onChange={handleChange}
               />
             </div>
