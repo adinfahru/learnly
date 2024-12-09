@@ -39,9 +39,9 @@ export default function StudentDashboard() {
       try {
         const [userResponse, classesResponse] = await Promise.all([
           getUser(),
-          getEnrolledClasses()
+          getEnrolledClasses(),
         ]);
-        
+
         setUser(userResponse.data);
         setClasses(classesResponse.data);
         setLoading(false);
@@ -72,17 +72,21 @@ export default function StudentDashboard() {
   // Handle session expired
   const handleSessionExpired = () => {
     setShowSessionExpiredModal(false);
+    localStorage.removeItem("userRole");
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
+
     navigate("/login");
   };
-
+  
   // Handle logout
   const handleLogout = async () => {
     try {
       // Directly remove access and refresh tokens
+      localStorage.removeItem("userRole");
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
+
       navigate("/login");
     } catch (error) {
       console.error("Error logging out:", error);
@@ -90,9 +94,8 @@ export default function StudentDashboard() {
   };
 
   const handleClassClick = (classId) => {
-    navigate(`/class/${classId}`);  // Navigasi ke ClassDetail
+    navigate(`/class/${classId}`); // Navigasi ke ClassDetail
   };
-
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -101,8 +104,8 @@ export default function StudentDashboard() {
         <h2 className="text-2xl font-bold mb-6">Enrolled Classes</h2>
         <ul className="space-y-4 flex-grow">
           {classes.map((classItem) => (
-            <li 
-              key={classItem.id} 
+            <li
+              key={classItem.id}
               className="bg-indigo-600 p-4 rounded-md shadow-md hover:bg-indigo-500 cursor-pointer"
               onClick={() => handleClassClick(classItem.id)}
             >
@@ -149,19 +152,27 @@ export default function StudentDashboard() {
 
         {/* Classes Grid View */}
         <div className="mt-10">
-          <h2 className="text-xl font-semibold text-gray-700">Your Enrolled Classes</h2>
+          <h2 className="text-xl font-semibold text-gray-700">
+            Your Enrolled Classes
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
             {classes.map((classItem) => (
-              <div 
-                key={classItem.id} 
+              <div
+                key={classItem.id}
                 className="bg-white shadow-md rounded-lg p-6 hover:shadow-lg transition-shadow"
                 onClick={() => handleClassClick(classItem.id)}
               >
-                <h3 className="text-xl font-semibold text-indigo-700">{classItem.name}</h3>
+                <h3 className="text-xl font-semibold text-indigo-700">
+                  {classItem.name}
+                </h3>
                 <p className="text-gray-600 mt-2">{classItem.subject}</p>
                 <div className="mt-4 pt-4 border-t">
-                  <p className="text-sm text-gray-500">Teacher: {classItem.teacher?.username}</p>
-                  <p className="text-sm text-gray-500">Students: {classItem.students?.length || 0}</p>
+                  <p className="text-sm text-gray-500">
+                    Teacher: {classItem.teacher?.username}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Students: {classItem.students?.length || 0}
+                  </p>
                 </div>
               </div>
             ))}
@@ -200,4 +211,3 @@ export default function StudentDashboard() {
     </div>
   );
 }
-

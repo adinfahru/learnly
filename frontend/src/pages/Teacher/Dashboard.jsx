@@ -63,8 +63,10 @@ export default function TeacherDashboard() {
   // Handle session expired
   const handleSessionExpired = () => {
     setShowSessionExpiredModal(false);
+    localStorage.removeItem("userRole");
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
+
     navigate("/login");
   };
 
@@ -72,8 +74,10 @@ export default function TeacherDashboard() {
   const handleLogout = async () => {
     try {
       // Directly remove access and refresh tokens
+      localStorage.removeItem("userRole");
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
+
       navigate("/login");
     } catch (error) {
       console.error("Error logging out:", error);
@@ -91,7 +95,7 @@ export default function TeacherDashboard() {
   };
 
   const handleClassClick = (classId) => {
-    navigate(`/class/${classId}`);  // Navigasi ke ClassDetail
+    navigate(`/class/${classId}`); // Navigasi ke ClassDetail
   };
 
   return (
@@ -105,7 +109,6 @@ export default function TeacherDashboard() {
               key={classItem.id}
               className=" p-2 rounded-md shadow-md hover:bg-indigo-100 cursor-pointer"
               onClick={() => handleClassClick(classItem.id)}
-              
             >
               <h3 className="font-semibold">{classItem.name}</h3>
               <p className="text-xs">Kode: {classItem.code}</p>
