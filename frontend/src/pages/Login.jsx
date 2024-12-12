@@ -34,6 +34,7 @@ export default function Login() {
     try {
       const response = await login(formData);
 
+      localStorage.setItem("userRole", response.data.role);
       localStorage.setItem("accessToken", response.data.tokens.access);
       localStorage.setItem("refreshToken", response.data.tokens.refresh);
 
@@ -41,9 +42,9 @@ export default function Login() {
 
       const role = response.data.role;
       if (role === "student") {
-        navigate("/student-dashboard");
+        navigate("/student/dashboard");
       } else if (role === "teacher") {
-        navigate("/teacher-dashboard");
+        navigate("/teacher/dashboard");
       } else {
         navigate("/dashboard");
       }

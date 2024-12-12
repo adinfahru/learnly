@@ -3,9 +3,11 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 
 class CustomUserSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(read_only=True)
+    
     class Meta:
         model = CustomUser
-        fields = ("id", "username", "email")
+        fields = ("id", "username", "email", "first_name", "last_name", "full_name")
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password1 = serializers.CharField(write_only=True)
@@ -14,8 +16,13 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ("id", "username", "email", "password1", "password2", "role")
-        extra_kwargs = {"password": {"write_only": True}}
+        fields = ("id", "username", "email", "first_name", "last_name", 
+                 "password1", "password2", "role")
+        extra_kwargs = {
+            "password": {"write_only": True},
+            "first_name": {"required": True},
+            "last_name": {"required": True}
+        }
 
     def validate(self, attrs):
         if attrs['password1'] != attrs['password2']:
@@ -24,6 +31,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         password = attrs.get("password1", "")
         if len(password) < 8:
             raise serializers.ValidationError("Passwords must be at least 8 characters!")
+        
+        # Validate first_name and last_name are not empty
+        if not attrs.get('first_name'):
+            raise serializers.ValidationError("First name is required")
+        if not attrs.get('last_name'):
+            raise serializers.ValidationError("Last name is required")
         
         return attrs
 
@@ -42,4 +55,3 @@ class UserLoginSerializer(serializers.Serializer):
         if user and user.is_active:
             return user
         raise serializers.ValidationError("Incorrect Credentials!")
-  
