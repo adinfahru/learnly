@@ -1,10 +1,25 @@
 import React, { useState } from "react";
+import moment from "moment";
 
 const PublishQuizModal = ({ show, onClose, onPublish, quiz }) => {
   const [publishData, setPublishData] = useState({
     start_date: "",
     end_date: "",
   });
+
+  const handlePublish = () => {
+    // Konversi ke ISO string dengan timezone
+    const formattedData = {
+      start_date: publishData.start_date
+        ? moment(publishData.start_date).format("YYYY-MM-DDTHH:mm:ssZ")
+        : null,
+      end_date: publishData.end_date
+        ? moment(publishData.end_date).format("YYYY-MM-DDTHH:mm:ssZ")
+        : null,
+    };
+
+    onPublish(formattedData);
+  };
 
   if (!show) return null;
 
@@ -48,21 +63,23 @@ const PublishQuizModal = ({ show, onClose, onPublish, quiz }) => {
             <p>Total Questions: {quiz.total_questions}</p>
             <p>Total Duration: {quiz.total_duration} minutes</p>
           </div>
-        </div>
 
-        <div className="mt-6 flex justify-end space-x-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => onPublish(publishData)}
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-          >
-            Publish Quiz
-          </button>
+          {/* ... rest of your component ... */}
+
+          <div className="mt-6 flex justify-end space-x-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-gray-600 hover:text-gray-800"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handlePublish}
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            >
+              Publish Quiz
+            </button>
+          </div>
         </div>
       </div>
     </div>
