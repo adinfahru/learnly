@@ -6,6 +6,9 @@ from .models import Class
 from accounts.models import CustomUser
 from .serializers import ClassSerializer
 from .permissions import IsTeacherOrStudent
+from quizzes.serializers import QuizSerializer
+from django.utils import timezone
+
 
 class ClassViewSet(viewsets.ModelViewSet):
     serializer_class = ClassSerializer
@@ -94,4 +97,32 @@ class ClassViewSet(viewsets.ModelViewSet):
             return Response(
                 {"message": str(e)}, 
                 status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=True)
+    def quizzes(self, request, pk=None):
+        try:
+            class_obj = self.get_object()
+            print(f"Fetching quizzes for class: {class_obj.id}")  # Debug log
+
+            if request.user.role == 'teacher':
+                # Teacher sees all quizzes in their class
+                quizzes = class_obj.quizzes.filter(creator=request.user)
+            else:
+                # Student sees only published quizzes
+                quizzes = class_obj.quizzes.filter(
+                    is_published=True,
+                    classes=class_obj
+                ).exclude(
+                    end_date__lt=timezone.now()
+                )
+
+            print(f"Found {quizzes.count()} quizzes")  # Debug log
+            serializer = QuizSerializer(quizzes, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            print(f"Error fetching quizzes: {str(e)}")  # Debug log
+            return Response(
+                {"error": "Failed to fetch quizzes"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

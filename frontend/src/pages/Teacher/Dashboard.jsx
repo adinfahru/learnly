@@ -104,7 +104,7 @@ export default function TeacherDashboard() {
       <div className="w-64 border-2 shadow text-indigo-800 p-6 flex flex-col text-sm">
         <h2 className="font-bold mb-6 text-sm">Welcome, {user?.full_name}!</h2>
         <ul className="space-y-4 flex-grow">
-          {classes.map((classItem) => (
+          {/* {classes.map((classItem) => (
             <li
               key={classItem.id}
               className=" p-2 rounded-md shadow-md hover:bg-indigo-100 cursor-pointer"
@@ -113,7 +113,7 @@ export default function TeacherDashboard() {
               <h3 className="font-semibold">{classItem.name}</h3>
               <p className="text-xs">Kode: {classItem.code}</p>
             </li>
-          ))}
+          ))} */}
         </ul>
       </div>
 
