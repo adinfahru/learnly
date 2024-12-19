@@ -21,6 +21,111 @@ const TakeQuiz = () => {
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const saveProgress = () => {
+    localStorage.setItem(`quiz_${quizId}_progress`, JSON.stringify({
+      answers,
+      currentQuestionIndex,
+      session_id: currentSession?.id,
+      attemptId,
+      timeLeft,
+    }));
+  };
+  
+  const loadProgress = (quizData) => {
+    const saved = localStorage.getItem(`quiz_${quizId}_progress`);
+    if (saved) {
+      try {
+        const progress = JSON.parse(saved);
+        setAnswers(progress.answers || {});
+        setCurrentQuestionIndex(progress.currentQuestionIndex || 0);
+        setAttemptId(progress.attemptId);
+        const session = quizData.sessions.find(s => s.id === progress.session_id);
+        if (session) {
+          setCurrentSession(session);
+          setTimeLeft(progress.timeLeft);
+        }
+      } catch (err) {
+        console.error("Error loading progress:", err);
+      }
+    }
+  };
+  
+
+  const loadQuiz = async () => {
+    try {
+      setLoading(true);
+      const response = await getQuizDetail(quizId);
+      setQuiz(response.data);
+
+      if (response.data.sessions?.length > 0) {
+        setCurrentSession(response.data.sessions[0]);
+      }
+
+      const attemptResponse = await startQuizAttempt(quizId);
+      setAttemptId(attemptResponse.data.id);
+      loadProgress(response.data);
+    } catch (err) {
+      console.error("Error loading quiz:", err);
+      setError("Failed to load quiz");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAnswer = async (questionId, optionId) => {
+    if (submitting) return;
+
+    try {
+      setSubmitting(true);
+      const newAnswers = { ...answers, [questionId]: optionId };
+      setAnswers(newAnswers);
+
+      await submitAnswer(attemptId, {
+        questionId,
+        optionId,
+        session_id: currentSession.id,
+      });
+      saveProgress();
+    } catch (err) {
+      console.error("Error submitting answer:", err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSessionComplete = async () => {
+    if (submitting) return;
+
+    try {
+      setSubmitting(true);
+      console.log("Completing session with data:", {
+        attemptId,
+        sessionId: currentSession.id,
+      });
+      const result = await completeSession(attemptId, currentSession.id);
+
+      if (result.data.is_quiz_completed) {
+        navigate(`/student/quiz/${quizId}/result`);
+      } else {
+        const currentIndex = quiz.sessions.findIndex(
+          (s) => s.id === currentSession.id
+        );
+        const nextSession = quiz.sessions[currentIndex + 1];
+
+        if (nextSession) {
+          setCurrentSession(nextSession);
+          setCurrentQuestionIndex(0);
+          setTimeLeft(nextSession.duration * 60);
+          setAnswers({});
+        }
+      }
+    } catch (error) {
+      console.error("Error completing session:", error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   useEffect(() => {
     loadQuiz();
   }, [quizId]);
@@ -40,188 +145,11 @@ const TakeQuiz = () => {
 
     const timer = setInterval(() => {
       setTimeLeft(timeLeft - 1);
-      // Save progress to localStorage
       saveProgress();
     }, 1000);
 
     return () => clearInterval(timer);
   }, [timeLeft]);
-
-  const loadQuiz = async () => {
-    try {
-      setLoading(true);
-      const response = await getQuizDetail(quizId);
-
-      console.log("Quiz data:", response.data); // Debug log
-
-      setQuiz(response.data);
-
-      // Set current session immediately after getting quiz data
-      if (response.data.sessions && response.data.sessions.length > 0) {
-        setCurrentSession(response.data.sessions[0]);
-      }
-
-      // Start attempt
-      try {
-        const attemptResponse = await startQuizAttempt(quizId);
-        setAttemptId(attemptResponse.data.id);
-
-        // Load progress after everything is set
-        loadProgress(response.data);
-      } catch (attemptError) {
-        console.error("Error starting attempt:", attemptError);
-        setError("Failed to start quiz attempt");
-      }
-    } catch (err) {
-      console.error("Error loading quiz:", err);
-      setError("Failed to load quiz");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadProgress = (quizData) => {
-    if (!quizData) return;
-
-    const saved = localStorage.getItem(`quiz_${quizId}_progress`);
-    if (saved) {
-      try {
-        const progress = JSON.parse(saved);
-        setAnswers(progress.answers || {});
-        setCurrentQuestionIndex(progress.currentQuestionIndex || 0);
-        setAttemptId(progress.attemptId);
-
-        if (progress.currentSession) {
-          const session = quizData.sessions.find(
-            (s) => s.id === progress.currentSession
-          );
-          if (session) {
-            setCurrentSession(session);
-            setTimeLeft(progress.timeLeft);
-          }
-        }
-      } catch (err) {
-        console.error("Error loading progress:", err);
-      }
-    }
-  };
-
-  // Add error handling in render
-  if (error) {
-    return (
-      <div className="text-center p-4">
-        <p className="text-red-600">{error}</p>
-        <button
-          onClick={() => navigate("/student/dashboard")}
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
-        >
-          Back to Dashboard
-        </button>
-      </div>
-    );
-  }
-
-  if (loading || !quiz || !currentSession) {
-    return (
-      <div className="text-center p-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-        <p className="mt-4">Loading quiz...</p>
-      </div>
-    );
-  }
-
-  const currentQuestion = currentSession.questions[currentQuestionIndex];
-  if (!currentQuestion) {
-    return (
-      <div className="text-center p-4">
-        <p>No questions available in this session.</p>
-      </div>
-    );
-  }
-
-  const saveProgress = () => {
-    localStorage.setItem(
-      `quiz_${quizId}_progress`,
-      JSON.stringify({
-        answers,
-        currentQuestionIndex,
-        currentSession: currentSession?.id,
-        attemptId,
-        timeLeft,
-      })
-    );
-  };
-
-  const handleAnswer = async (questionId, optionId) => {
-    const newAnswers = {
-      ...answers,
-      [questionId]: optionId,
-    };
-    setAnswers(newAnswers);
-
-    try {
-      await submitAnswer(attemptId, {
-        question_id: questionId,
-        option_id: optionId,
-      });
-      saveProgress();
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleSessionComplete = async () => {
-    if (!attemptId || !currentSession) {
-      // toast.error("Missing required data to complete session");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const result = await completeSession(attemptId, currentSession.id);
-
-      // Clear progress for this session from localStorage
-      const savedProgress = JSON.parse(
-        localStorage.getItem(`quiz_${quizId}_progress`) || "{}"
-      );
-      delete savedProgress[currentSession.id];
-      localStorage.setItem(
-        `quiz_${quizId}_progress`,
-        JSON.stringify(savedProgress)
-      );
-
-      if (result.is_quiz_completed) {
-        // If all sessions are completed, redirect to results page
-        // toast.success("Quiz completed successfully!");
-        navigate(`/student/quiz/${quizId}/result`);
-      } else {
-        // Move to next session
-        const currentIndex = quiz.sessions.findIndex(
-          (s) => s.id === currentSession.id
-        );
-        const nextSession = quiz.sessions[currentIndex + 1];
-
-        if (nextSession) {
-          setCurrentSession(nextSession);
-          setCurrentQuestionIndex(0);
-          setTimeLeft(nextSession.duration * 60);
-          setAnswers({}); // Reset answers for new session
-          // toast.success("Session completed! Moving to next session.");
-        } else {
-          // Shouldn't reach here if backend is working correctly
-          console.error(
-            "No next session found but quiz not marked as completed"
-          );
-          // toast.error("Error moving to next session");
-        }
-      }
-    } catch (error) {
-      console.error("Error completing session:", error);
-      // toast.error("Failed to complete session. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -231,10 +159,10 @@ const TakeQuiz = () => {
     );
   }
 
-  if (!quiz || !currentSession) {
+  if (error || !quiz || !currentSession) {
     return (
       <div className="text-center p-4">
-        <p className="text-red-600">Unable to load quiz</p>
+        <p className="text-red-600">{error || "Unable to load quiz"}</p>
         <button
           onClick={() => navigate("/student/dashboard")}
           className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -245,10 +173,10 @@ const TakeQuiz = () => {
     );
   }
 
+  const currentQuestion = currentSession.questions[currentQuestionIndex];
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      {/* Timer */}
       <div className="fixed top-4 right-4 bg-white rounded-lg shadow p-4">
         <p className="text-lg font-semibold">
           Time Left: {Math.floor(timeLeft / 60)}:
@@ -256,7 +184,6 @@ const TakeQuiz = () => {
         </p>
       </div>
 
-      {/* Session Progress */}
       <div className="mb-6">
         <h2 className="text-xl font-bold">
           Session {currentSession.name} (
@@ -268,7 +195,6 @@ const TakeQuiz = () => {
         </p>
       </div>
 
-      {/* Question */}
       {currentQuestion && (
         <div className="bg-white rounded-lg shadow p-6">
           <p className="text-lg mb-4">{currentQuestion.text}</p>
@@ -299,7 +225,6 @@ const TakeQuiz = () => {
         </div>
       )}
 
-      {/* Navigation Buttons */}
       <div className="mt-6 flex justify-between">
         <button
           onClick={() => setCurrentQuestionIndex((i) => i - 1)}
@@ -313,8 +238,8 @@ const TakeQuiz = () => {
           <button
             onClick={handleSessionComplete}
             disabled={submitting}
-            className={`px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 
-              disabled:bg-gray-400 disabled:cursor-not-allowed`}
+            className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 
+              disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             {submitting ? "Completing..." : "Complete Session"}
           </button>

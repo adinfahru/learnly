@@ -140,57 +140,99 @@ class QuizAttemptViewSet(viewsets.ModelViewSet):
         return QuizAttempt.objects.filter(student=self.request.user)
 
     @action(detail=True, methods=['post'])
-    def complete_session(self, request, pk=None):
+    def submit_answer(self, request, pk=None):
         try:
             attempt = self.get_object()
             session_id = request.data.get('session_id')
-            
-            if not session_id:
-                return Response(
-                    {"message": "Session ID is required"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            question_id = request.data.get('question_id')
+            option_id = request.data.get('option_id')
+
+            # Validasi data
+            if not all([session_id, question_id, option_id]):
+                return Response({
+                    "message": "Missing required fields",
+                    "received_data": request.data
+                }, status=status.HTTP_400_BAD_REQUEST)
 
             # Validasi attempt
             if attempt.student != request.user:
                 return Response(
-                    {"message": "Not authorized to complete this session"},
+                    {"message": "Not authorized"},
                     status=status.HTTP_403_FORBIDDEN
                 )
 
-            # Validasi session
-            session = attempt.quiz.sessions.filter(id=session_id).first()
-            if not session:
+            # Get or create session attempt
+            session_attempt, created = SessionAttempt.objects.get_or_create(
+                quiz_attempt=attempt,
+                session_id=session_id
+            )
+
+            # Create or update answer
+            answer, created = Answer.objects.update_or_create(
+                session_attempt=session_attempt,
+                question_id=question_id,
+                defaults={
+                    'selected_option_id': option_id,
+                    'is_correct': Option.objects.get(id=option_id).is_correct
+                }
+            )
+
+            return Response({
+                "status": "success",
+                "is_correct": answer.is_correct
+            })
+
+        except Exception as e:
+            return Response({
+                "message": str(e),
+                "received_data": request.data
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'])
+    def complete_session(self, request, pk=None):
+        try:
+            attempt = self.get_object()
+            session_id = request.data.get('session_id')
+
+            if not session_id:
+                return Response({
+                    "message": "Session ID is required",
+                    "received_data": request.data
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Validasi attempt
+            if attempt.student != request.user:
                 return Response(
-                    {"message": "Session not found"},
-                    status=status.HTTP_404_NOT_FOUND
+                    {"message": "Not authorized"},
+                    status=status.HTTP_403_FORBIDDEN
                 )
 
-            # Record session completion
-            SessionCompletion.objects.create(
+            # Marking session as completed
+            session_completion = SessionCompletion.objects.create(
                 attempt=attempt,
-                session=session,
-                completed_at=timezone.now()
+                session_id=session_id
             )
 
             # Check if all sessions are completed
             total_sessions = attempt.quiz.sessions.count()
             completed_sessions = attempt.session_completions.count()
-            
-            if completed_sessions >= total_sessions:
+            is_quiz_completed = total_sessions == completed_sessions
+
+            if is_quiz_completed:
                 attempt.completed_at = timezone.now()
                 attempt.save()
 
             return Response({
-                "message": "Session completed successfully",
-                "is_quiz_completed": completed_sessions >= total_sessions
+                "status": "success",
+                "is_quiz_completed": is_quiz_completed
             })
 
         except Exception as e:
-            return Response(
-                {"message": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return Response({
+                "message": str(e),
+                "received_data": request.data
+            }, status=status.HTTP_400_BAD_REQUEST)
+          
 
 class QuizSessionViewSet(viewsets.ModelViewSet):
     serializer_class = QuizSessionSerializer
