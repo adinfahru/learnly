@@ -58,9 +58,17 @@ class QuizSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         classes = validated_data.pop('classes', [])
-        quiz = Quiz.objects.create(**validated_data)
-        quiz.classes.set(classes)
-        return quiz
+        quizzes = []
+        
+        # Buat quiz terpisah untuk setiap kelas
+        for class_obj in classes:
+            quiz_data = validated_data.copy()
+            quiz = Quiz.objects.create(**quiz_data)
+            quiz.classes.add(class_obj)
+            quizzes.append(quiz)
+            
+        # Return quiz pertama sebagai response
+        return quizzes[0] if quizzes else Quiz.objects.create(**validated_data)
 
     def get_total_questions(self, obj):
         return sum(session.questions.count() for session in obj.sessions.all())
@@ -68,9 +76,111 @@ class QuizSerializer(serializers.ModelSerializer):
     def get_total_duration(self, obj):
         return sum(session.duration for session in obj.sessions.all())
 
+class AnswerSerializer(serializers.ModelSerializer):
+    question = QuestionSerializer()
+    selected_option = OptionSerializer()
+    
+    class Meta:
+        model = Answer
+        fields = ['id', 'question', 'selected_option', 'is_correct']
+
+class SessionAttemptSerializer(serializers.ModelSerializer):
+    session = QuizSessionSerializer()
+    answers = AnswerSerializer(many=True)
+    
+    class Meta:
+        model = SessionAttempt
+        fields = [
+            'id',
+            'session',
+            'started_at',
+            'completed_at',
+            'score',
+            'answers'
+        ]
 
 class QuizAttemptSerializer(serializers.ModelSerializer):
+    session_attempts = SessionAttemptSerializer(many=True)
+    student_name = serializers.SerializerMethodField()
+    student_email = serializers.SerializerMethodField()
+    
     class Meta:
         model = QuizAttempt
-        fields = ['id', 'quiz', 'student', 'started_at', 'completed_at', 'score']
-        read_only_fields = ['started_at', 'completed_at', 'score']
+        fields = [
+            'id', 
+            'quiz', 
+            'student', 
+            'student_name', 
+            'student_email', 
+            'started_at', 
+            'completed_at', 
+            'score', 
+            'session_attempts'
+        ]
+    
+    def get_student_name(self, obj):
+        # Mendapatkan nama lengkap student
+        return f"{obj.student.first_name} {obj.student.last_name}".strip()
+    
+    def get_student_email(self, obj):
+        # Mendapatkan email student
+        return obj.student.email
+
+
+class QuizSubmissionSerializer(serializers.ModelSerializer):
+    student_name = serializers.SerializerMethodField()
+    student_email = serializers.SerializerMethodField()
+    submission_date = serializers.DateTimeField(source='completed_at')
+    class_id = serializers.SerializerMethodField()  # Menggunakan class_id
+
+    class Meta:
+        model = QuizAttempt
+        fields = [
+            'id',
+            'quiz',
+            'student_name',
+            'student_email',
+            'score',
+            'submission_date',
+            'class_id'  # Mengubah dari class_code ke class_id
+        ]
+
+    def get_student_name(self, obj):
+        return f"{obj.student.first_name} {obj.student.last_name}".strip()
+    
+    def get_student_email(self, obj):
+        return obj.student.email
+
+    def get_class_id(self, obj):
+        # Mendapatkan ID kelas yang terhubung dengan quiz
+        classes = obj.quiz.classes.filter(students=obj.student)
+        if classes.exists():
+            return classes.first().id  # Ambil ID kelas pertama jika ada
+        return None
+
+    
+class QuizDetailWithSubmissionsSerializer(serializers.ModelSerializer):
+    submissions = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Quiz
+        fields = [
+            'id',
+            'title',
+            'description',
+            'is_published',
+            'submissions'
+        ]
+
+    def get_submissions(self, obj):
+        # Ambil class_id dari context serializer
+        class_id = self.context.get('class_id', None)
+        if class_id:
+            # Filter attempts berdasarkan siswa yang terdaftar di kelas dengan id tertentu
+            return QuizSubmissionSerializer(
+                obj.attempts.filter(student__enrolled_classes__id=class_id),
+                many=True
+            ).data
+        # Jika tidak ada class_id, kembalikan semua submissions
+        return QuizSubmissionSerializer(obj.attempts.all(), many=True).data
+

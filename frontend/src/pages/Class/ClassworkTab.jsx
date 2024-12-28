@@ -1,30 +1,109 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { getClassQuizzes } from "../../services/quizService";
+import { getClassQuizzes, getQuizAttempts } from "../../services/quizService";
 
 export default function ClassworkTab({ classData }) {
   const { userRole } = useAuth();
   const navigate = useNavigate();
   const [quizzes, setQuizzes] = useState([]);
+  const [attempts, setAttempts] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    loadQuizzes();
+    loadData();
   }, [classData.id]);
 
-  const loadQuizzes = async () => {
+  const loadData = async () => {
     try {
-      const response = await getClassQuizzes(classData.id);
-      setQuizzes(response.data);
+      const [quizzesResponse, attemptsResponse] = await Promise.all([
+        getClassQuizzes(classData.id),
+        userRole === "student" ? getQuizAttempts() : null,
+      ]);
+
+      setQuizzes(quizzesResponse.data);
+
+      if (attemptsResponse) {
+        const attemptsMap = attemptsResponse.data.reduce((acc, attempt) => {
+          acc[attempt.quiz] = attempt;
+          return acc;
+        }, {});
+        setAttempts(attemptsMap);
+      }
+
       setError(null);
     } catch (err) {
-      setError("Failed to load quizzes");
-      console.error("Error loading quizzes:", err);
+      setError("Failed to load data");
+      console.error("Error loading data:", err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const renderQuizButton = (quiz) => {
+    const attempt = attempts[quiz.id];
+    const isCompleted = attempt?.completed_at;
+
+    if (userRole === "teacher") {
+      return (
+        <div className="space-y-2">
+          <button
+            onClick={() => navigate(`/quiz/${quiz.id}/submissions`)}
+            className="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Submissions
+          </button>
+          <button
+            onClick={() => navigate(`/quiz/${quiz.id}/edit`)}
+            className="mt-2 text-indigo-600 hover:text-indigo-800"
+          >
+            Edit Quiz
+          </button>
+        </div>
+      );
+    }
+
+    if (!quiz.is_published) {
+      return (
+        <button disabled className="mt-2 bg-gray-400 text-white px-4 py-2 rounded">
+          Not Available
+        </button>
+      );
+    }
+
+    if (isCompleted) {
+      return (
+        <div className="space-y-2 text-center">
+          {quiz.show_result ? (
+            <div className="text-lg font-semibold text-green-600">
+              Score: {attempt.score}%
+            </div>
+          ) : (
+            <div className="text-sm font-medium text-gray-500 py-2">
+              You have completed this quiz.
+            </div>
+          )}
+          {quiz.show_answers && (
+            <button
+              onClick={() => navigate(`/quiz/${quiz.id}/result/${attempt.id}`)}
+              className="text-blue-600 hover:text-blue-800 underline"
+            >
+              Show Answers
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <button
+        onClick={() => navigate(`/quiz/${quiz.id}/take`)}
+        className="mt-2 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+      >
+        Take Quiz
+      </button>
+    );
   };
 
   if (loading) return <div>Loading quizzes...</div>;
@@ -74,8 +153,7 @@ export default function ClassworkTab({ classData }) {
                     <div className="text-right">
                       {quiz.start_date && (
                         <p className="text-sm text-gray-500">
-                          Start:{" "}
-                          {new Date(quiz.start_date).toLocaleDateString()}
+                          Start: {new Date(quiz.start_date).toLocaleDateString()}
                         </p>
                       )}
                       {quiz.end_date && (
@@ -83,22 +161,7 @@ export default function ClassworkTab({ classData }) {
                           End: {new Date(quiz.end_date).toLocaleDateString()}
                         </p>
                       )}
-                      {userRole === "teacher" ? (
-                        <button
-                          onClick={() => navigate(`/quiz/${quiz.id}/edit`)}
-                          className="mt-2 text-indigo-600 hover:text-indigo-800"
-                        >
-                          Edit Quiz
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => navigate(`/quiz/${quiz.id}/take`)}
-                          className="mt-2 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
-                          disabled={!quiz.is_published}
-                        >
-                          {quiz.is_published ? "Take Quiz" : "Not Available"}
-                        </button>
-                      )}
+                      {renderQuizButton(quiz)}
                     </div>
                   </div>
                   {userRole === "teacher" && (

@@ -13,6 +13,9 @@ import QuizCreate from "../pages/Quiz/CreateQuiz";
 import QuizEdit from "../pages/Quiz/EditQuiz";
 import QuizList from "../pages/Quiz/QuizList";
 import QuizTake from "../pages/Quiz/TakeQuiz";
+import QuizResultView from "../pages/Quiz/QuizResult";
+import SubmissionQuiz from "../pages/Quiz/SubmissionQuiz";
+
 
 const routes = [
   // Rute publik
@@ -29,7 +32,8 @@ const routes = [
   { path: "/quiz/:quizId/edit", element: <QuizEdit />, private: true, roles: ['teacher']},
   { path: "/quiz/:quizId/take", element: <QuizTake />, private: true, roles: ['student']},
   { path: "/class/:classId/quizzes", element: <QuizList />, private: true,},
-
+  { path: "/quiz/:quizId/result/:attemptId", element: <QuizResultView />, private: true, roles: ['student'] },
+  { path: "/quiz/:quizId/submissions", element: <SubmissionQuiz />, private: true, roles: ['teacher'] },
   // Halaman Forbidden
   { path: "/forbidden", element: <Forbidden /> },
 

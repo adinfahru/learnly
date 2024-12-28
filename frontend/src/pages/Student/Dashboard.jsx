@@ -79,17 +79,37 @@ export default function StudentDashboard() {
     navigate("/login");
   };
   
-  // Handle logout
   const handleLogout = async () => {
     try {
-      // Directly remove access and refresh tokens
+      const accessToken = localStorage.getItem("accessToken");
+      const refreshToken = localStorage.getItem("refreshToken");
+      
+      // Panggil API logout untuk blacklist token
+      await logout(refreshToken, accessToken);
+      
+      // Hapus token autentikasi
       localStorage.removeItem("userRole");
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
-
+  
+      // Bersihkan semua quiz progress
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('quiz_') && key.endsWith('_progress')) {
+          localStorage.removeItem(key);
+        }
+      }
+  
+      // Reset state
+      setUser(null);
+      setClasses([]);
+  
       navigate("/login");
     } catch (error) {
       console.error("Error logging out:", error);
+      // Tetap lakukan pembersihan meskipun API logout gagal
+      localStorage.clear(); // Alternatif: hapus semua data localStorage
+      navigate("/login");
     }
   };
 
