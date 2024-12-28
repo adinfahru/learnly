@@ -37,14 +37,23 @@ export default function Create() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
+  
     try {
-      // Validate that at least one class is selected
       if (formData.classes.length === 0) {
         throw new Error("Please select at least one class");
       }
-
-      const response = await createQuiz(formData);
+  
+      // Pastikan formData sudah benar
+      const payload = {
+        title: formData.title,
+        description: formData.description,
+        randomize_questions: formData.randomize_questions,
+        show_result: formData.show_result,
+        show_answers: formData.show_answers,
+        classes: formData.classes, // Pastikan ini dikirim dengan benar
+      };
+  
+      const response = await createQuiz(payload);
       navigate(`/quiz/${response.data.id}/edit`);
     } catch (err) {
       setError(err.message || "Failed to create quiz");
@@ -52,6 +61,7 @@ export default function Create() {
       setLoading(false);
     }
   };
+  
 
   const handleClassToggle = (classId) => {
     setFormData((prev) => {

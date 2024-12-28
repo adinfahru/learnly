@@ -57,13 +57,24 @@ export const getAvailableQuizzes = async () => {
   return apiClient.get("quizzes/available/");
 };
 
+export const getQuizAttempts = async () => {
+  return apiClient.get("attempts/");
+};
+
+export const getQuizAttemptDetail = async (attemptId) => {
+  return apiClient.get(`attempts/${attemptId}/`);
+};
+
+export const getQuizSubmissions = async (quizId) => {
+  return apiClient.get(`quizzes/${quizId}/submissions/`);
+};
+
 export const submitAnswer = async (attemptId, answerData) => {
-  // Log untuk memastikan data yang dikirim
   console.log('Submitting answer:', {attemptId, answerData});
   return apiClient.post(`attempts/${attemptId}/submit_answer/`, {
     question_id: answerData.questionId,
     option_id: answerData.optionId,
-    session_id: answerData.sessionId
+    session_id: answerData.session_id  // Perhatikan kita menggunakan session_id dari data
   });
 };
 

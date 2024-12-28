@@ -1,4 +1,3 @@
-// src/pages/student/quiz/TakeQuiz.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -21,16 +20,21 @@ const TakeQuiz = () => {
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const [attempts, setAttempts] = useState({});
+
   const saveProgress = () => {
-    localStorage.setItem(`quiz_${quizId}_progress`, JSON.stringify({
-      answers,
-      currentQuestionIndex,
-      session_id: currentSession?.id,
-      attemptId,
-      timeLeft,
-    }));
+    localStorage.setItem(
+      `quiz_${quizId}_progress`,
+      JSON.stringify({
+        answers,
+        currentQuestionIndex,
+        session_id: currentSession?.id,
+        attemptId,
+        timeLeft,
+      })
+    );
   };
-  
+
   const loadProgress = (quizData) => {
     const saved = localStorage.getItem(`quiz_${quizId}_progress`);
     if (saved) {
@@ -39,7 +43,9 @@ const TakeQuiz = () => {
         setAnswers(progress.answers || {});
         setCurrentQuestionIndex(progress.currentQuestionIndex || 0);
         setAttemptId(progress.attemptId);
-        const session = quizData.sessions.find(s => s.id === progress.session_id);
+        const session = quizData.sessions.find(
+          (s) => s.id === progress.session_id
+        );
         if (session) {
           setCurrentSession(session);
           setTimeLeft(progress.timeLeft);
@@ -49,7 +55,6 @@ const TakeQuiz = () => {
       }
     }
   };
-  
 
   const loadQuiz = async () => {
     try {
@@ -63,6 +68,8 @@ const TakeQuiz = () => {
 
       const attemptResponse = await startQuizAttempt(quizId);
       setAttemptId(attemptResponse.data.id);
+      setAttempts({ [quizId]: attemptResponse.data });
+
       loadProgress(response.data);
     } catch (err) {
       console.error("Error loading quiz:", err);
@@ -98,10 +105,6 @@ const TakeQuiz = () => {
 
     try {
       setSubmitting(true);
-      console.log("Completing session with data:", {
-        attemptId,
-        sessionId: currentSession.id,
-      });
       const result = await completeSession(attemptId, currentSession.id);
 
       if (result.data.is_quiz_completed) {
@@ -129,6 +132,14 @@ const TakeQuiz = () => {
   useEffect(() => {
     loadQuiz();
   }, [quizId]);
+
+  useEffect(() => {
+    if (quiz?.show_result && attempts[quizId]?.completed_at) {
+      navigate(`/student/quiz/${quizId}/result/${attemptId}`);
+    } else if (!quiz?.show_result && attempts[quizId]?.completed_at) {
+      navigate("/student/dashboard");
+    }
+  }, [quiz, attemptId, quizId, navigate, attempts]);
 
   useEffect(() => {
     if (currentSession?.duration) {
